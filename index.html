@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hysterchat Compiler</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/python/python.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Lexend+Exa&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Lexend Deca', sans-serif;
+        }
+        .CodeMirror {
+            height: 100%;
+            font-size: 14px;
+            font-family: 'Lexend Deca;', monospace;
+        }
+        .compiler-title {
+            font-family: 'Lexend Exa', sans-serif;
+        }
+        .sidebar-icon {
+            transition: all 0.3s ease;
+        }
+        .sidebar-icon.active i {
+            color: #3b82f6;
+        }
+        .sidebar-icon.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 5px;
+            height: 5px;
+            background-color: #3b82f6;
+            border-radius: 50%;
+        }
+        @media (max-width: 640px) {
+            .sidebar-icon.active::after {
+                bottom: auto;
+                right: -5px;
+                left: auto;
+                top: 50%;
+                transform: translateY(-50%);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+    <div class="flex flex-col h-screen">
+        <header class="bg-gray-800 p-2 sm:p-4 flex flex-wrap justify-between items-center">
+            <h1 class="text-xl sm:text-2xl font-bold compiler-title mb-2 sm:mb-0">Hysterchat Compiler</h1>
+            <div class="flex items-center space-x-2 sm:space-x-4">
+                <i class="fas fa-sync text-white text-lg sm:text-xl cursor-pointer hover:text-blue-400 transition-colors" onclick="resetCode()"></i>
+                <i class="fas fa-moon text-white text-lg sm:text-xl cursor-pointer hover:text-yellow-300 transition-colors" id="theme-toggle"></i>
+                <i class="fas fa-expand-arrows-alt text-white text-lg sm:text-xl cursor-pointer hover:text-green-400 transition-colors" id="fullscreen-toggle"></i>
+                <button class="bg-blue-600 px-3 py-1 sm:px-4 sm:py-2 rounded-full text-sm sm:text-lg font-semibold shadow-lg hover:bg-blue-700 transition-colors" onclick="runCode()">Run Code</button>
+            </div>
+        </header>
+        <div class="flex flex-1 overflow-hidden">
+            <aside class="bg-gray-800 w-12 sm:w-16 md:w-20 flex flex-col sm:flex-col items-center justify-start sm:justify-end p-2 sm:p-4" style="margin: auto; margin-top: 44px;">
+                <div class="sidebar-icon relative mb-4 sm:mb-8 cursor-pointer" data-language="text/x-csrc">
+                    <i class="fas fa-copyright" style="font-size: 2rem; color: white;"></i>
+                </div>
+                <div class="sidebar-icon relative mb-4 sm:mb-8 cursor-pointer" data-language="text/x-c++src">
+                    <img src="https://i.postimg.cc/FsnScB4N/image.png" alt="C++ Language" style="width: 2rem; height: 2rem; border-radius: 50%;">
+                </div>
+                <div class="sidebar-icon relative mb-4 sm:mb-8 cursor-pointer" data-language="text/x-java">
+                    <i class="fab fa-java" style="font-size: 2rem; color: white;"></i>
+                </div>
+                <div class="sidebar-icon relative mb-4 sm:mb-8 cursor-pointer" data-language="text/x-python">
+                    <i class="fab fa-python" style="font-size: 2rem; color: white;"></i>
+                </div>
+                <div class="sidebar-icon relative mb-4 sm:mb-8 cursor-pointer" data-language="text/javascript">
+                    <i class="fab fa-js" style="font-size: 2rem; color: white;"></i>
+                </div>
+            </aside>
+            
+            <main class="flex-1 flex flex-col overflow-hidden">
+                <div class="flex-1 flex flex-col sm:flex-row overflow-hidden">
+                    <div class="h-1/2 sm:h-auto sm:w-1/2 bg-gray-900 p-2 sm:p-4">
+                        <textarea id="editor" class="w-full h-full"></textarea>
+                    </div>
+                    <div class="h-1/2 sm:h-auto sm:w-1/2 flex flex-col overflow-hidden">
+                        <div class="flex-1 bg-gray-800 m-1 sm:m-2 p-2 sm:p-4 rounded-lg overflow-hidden">
+                            <h2 class="text-lg sm:text-xl font-bold mb-2">Input</h2>
+                            <textarea id="input" class="w-full h-[calc(100%-2rem)] bg-gray-700 p-2 rounded-md resize-none" placeholder="Enter your inputs here..."></textarea>
+                        </div>
+                        <div class="flex-1 bg-gray-800 m-1 sm:m-2 p-2 sm:p-4 rounded-lg overflow-hidden">
+                            <h2 class="text-lg sm:text-xl font-bold mb-2">Output</h2>
+                            <pre id="output" class="w-full h-[calc(100%-2rem)] bg-gray-700 p-2 rounded-md overflow-auto"></pre>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        let editor = CodeMirror.fromTextArea(document.getElementById("editor"), {
+            lineNumbers: true,
+            mode: null,
+            theme: "default"
+        });
+
+        const defaultCode = {
+            "text/x-csrc": `#include <stdio.h>
+
+int main() {
+    printf("Hello, World!");
+    return 0;
+}`,
+            "text/x-c++src": `#include <iostream>
+
+int main() {
+    std::cout << "Hello, World!";
+    return 0;
+}`,
+            "text/x-java": `public class Main {
+    public static void main(String[] args) {
+        System.out.println("Hello, World!");
+    }
+}`,
+            "text/x-python": `print("Hello, World!")`,
+            "text/javascript": `console.log("Hello, World!");`
+        };
+
+        function resetCode() {
+            const language = editor.getOption("mode");
+            editor.setValue(defaultCode[language] || "");
+        }
+
+        function runCode() {
+            const code = editor.getValue();
+            const inputs = document.getElementById("input").value;
+            const language = editor.getOption("mode");
+
+            fetch("/execute", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ code, inputs, language })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("output").textContent = data.output;
+            })
+            .catch(error => {
+                document.getElementById("output").textContent = "Error: " + error.message;
+            });
+        }
+
+        document.getElementById("theme-toggle").addEventListener("click", () => {
+            if (editor.getOption("theme") === "default") {
+                editor.setOption("theme", "material");
+            } else {
+                editor.setOption("theme", "default");
+            }
+        });
+
+        let isFullscreen = false;
+        function toggleFullscreen() {
+            if (isFullscreen) {
+                document.exitFullscreen().catch(console.log);
+            } else {
+                document.documentElement.requestFullscreen().catch(console.log);
+            }
+            isFullscreen = !isFullscreen;
+        }
+
+        document.getElementById("fullscreen-toggle").addEventListener("click", toggleFullscreen);
+
+        document.querySelectorAll(".sidebar-icon").forEach(icon => {
+            icon.addEventListener("click", () => {
+                document.querySelectorAll(".sidebar-icon").forEach(icon => icon.classList.remove("active"));
+                icon.classList.add("active");
+                let language = icon.getAttribute("data-language");
+                editor.setOption("mode", language);
+                resetCode();
+            });
+        });
+    </script>
+</body>
+</html>
