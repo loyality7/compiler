@@ -42,7 +42,7 @@ def execute():
 
     # Send the payload to the OpenFaaS function
     try:
-        response = requests.post(f'http://test.cyberbabu.tech/function/{faas_function}', json=payload)
+        response = requests.post(f'https://parser.hysterchat.com/function/{faas_function}', json=payload)
         response.raise_for_status()
         output = response.text
     except requests.RequestException as e:
